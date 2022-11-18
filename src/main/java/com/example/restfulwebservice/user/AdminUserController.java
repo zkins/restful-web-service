@@ -4,6 +4,7 @@ import java.util.List;
 
 import javax.validation.Valid;
 
+import org.springframework.beans.BeanUtils;
 import org.springframework.http.converter.json.MappingJacksonValue;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -39,9 +40,12 @@ public class AdminUserController {
         return mapping;
     }
 
-    // GET /users/1 or users/2 -> String으로 들어오지만 파라미터를 int 로 선언하면 알아서 String->int 변환됨
-    @GetMapping("/users/{id}")
-    public MappingJacksonValue retrieveUser(@PathVariable int id) {
+    // GET /admin//users/1 -> /admin/v1/users/1
+    // @GetMapping("/v1/users/{id}")
+    // @GetMapping(value = "/users/{id}", params = "version=1")
+    // @GetMapping(value = "/users/{id}", headers="X-API-VERSION=1")
+    @GetMapping(value = "/users/{id}", produces = "application/vnd.copmpany.appv1+json")
+    public MappingJacksonValue retrieveUserV1(@PathVariable int id) {
         User user = service.findOne(id);
         if(user == null) {
             throw new UserNotFoundException(String.format("ID[%s] not found", id));
@@ -58,5 +62,30 @@ public class AdminUserController {
         return mapping;
     }
 
-}
+    // @GetMapping("/v2/users/{id}")
+    // @GetMapping(value = "/users/{id}", params = "version=2")
+    // @GetMapping(value = "/users/{id}", headers = "X-API-VERSION=2")
+    @GetMapping(value = "/users/{id}", produces = "application/vnd.copmpany.appv2+json")
+    public MappingJacksonValue retrieveUserV2(@PathVariable int id) {
+        User user = service.findOne(id);
 
+        if(user == null) {
+            throw new UserNotFoundException(String.format("ID[%s] not found", id));
+        }
+
+        // Uesr -> User2
+        UserV2 userV2 = new UserV2();
+        BeanUtils.copyProperties(user, userV2); // id, name, joinDate, password, ssn
+        userV2.setGrade("VIP");
+
+        SimpleBeanPropertyFilter filter
+            = SimpleBeanPropertyFilter.filterOutAllExcept("id", "name", "joinDate", "grade");
+        
+        FilterProvider filters = new SimpleFilterProvider().addFilter("UserInfoV2", filter);
+        
+        MappingJacksonValue mapping = new MappingJacksonValue(userV2);
+        mapping.setFilters(filters);
+                
+        return mapping;
+    }
+}
