@@ -5,6 +5,8 @@ import java.util.List;
 
 import javax.validation.Valid;
 
+import org.springframework.hateoas.EntityModel;
+import org.springframework.hateoas.server.mvc.WebMvcLinkBuilder;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -29,12 +31,24 @@ public class UserController {
 
     // GET /users/1 or users/2 -> String으로 들어오지만 파라미터를 int 로 선언하면 알아서 String->int 변환됨
     @GetMapping("/users/{id}")
-    public User retrieveUser(@PathVariable int id) {
+    public EntityModel<User> retrieveUser(@PathVariable int id) {
+    // public User retrieveUser(@PathVariable int id) {
         User user = service.findOne(id);
         if(user == null) {
             throw new UserNotFoundException(String.format("ID[%s] not found", id));
         }
-        return user;
+
+        // HATEOAS
+        EntityModel<User> model = EntityModel.of(user);
+
+        WebMvcLinkBuilder linkTo = WebMvcLinkBuilder.linkTo(
+                    WebMvcLinkBuilder.methodOn(this.getClass()).retrieveAllUsers()
+                    );
+        model.add(linkTo.withRel("all-users"));
+
+
+        // return user;
+        return model;
     }
 
     @PostMapping("/users")
