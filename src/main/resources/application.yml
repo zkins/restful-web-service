@@ -9,3 +9,13 @@ logging:
 spring:
   messages:
     basename: messages
+  mvc:
+    pathmatch:
+      matching-strategy: ANT_PATH_MATCHER
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: "*"
+        
