@@ -9,10 +9,17 @@ logging:
 spring:
   messages:
     basename: messages
+  devtools:
+    livereload:
+      enabled: true
+  security:
+    user:
+      name: username
+      password: passw0rd
   mvc:
     pathmatch:
       matching-strategy: ANT_PATH_MATCHER
-
+  
 management:
   endpoints:
     web:
